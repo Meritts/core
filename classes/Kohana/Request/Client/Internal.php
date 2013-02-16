@@ -104,11 +104,21 @@ class Kohana_Request_Client_Internal extends Request_Client {
 		}
 		catch (HTTP_Exception $e)
 		{
+      // If the request should bubble the exceptions, we do it now!
+      if ($request->bubble_exceptions() === TRUE) {
+        throw $e;
+      }
+
 			// Get the response via the Exception
 			$response = $e->get_response();
 		}
 		catch (Exception $e)
 		{
+      // If the request should bubble the exceptions, we do it now!
+      if ($request->bubble_exceptions() === TRUE) {
+        throw $e;
+      }
+
 			// Generate an appropriate Response object
 			$response = Kohana_Exception::_handler($e);
 		}

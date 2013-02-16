@@ -633,6 +633,11 @@ class Kohana_Request implements HTTP_Request {
 	 */
 	protected $_client;
 
+  /**
+   * @var bool Should bubble Exceptions in internal requests
+   */
+  protected $_bubble_exceptions = FALSE;
+
 	/**
 	 * Creates a new request object for the given URI. New requests should be
 	 * created using the [Request::instance] or [Request::factory] methods.
@@ -914,6 +919,23 @@ class Kohana_Request implements HTTP_Request {
 		return $this;
 	}
 
+  /**
+   * Getter/Setter indicating if an Internal Request should bubble its exceptions instead of just return the response (when HTTP_Exception) when they happen
+   *
+   * @param bool $bubble  Should bubble exceptions or not when in a internal request
+   * @return Request|bool
+   */
+  public function bubble_exceptions($bubble = NULL)
+  {
+    if ($bubble === NULL) {
+      return $this->_bubble_exceptions;
+    }
+
+    $this->_bubble_exceptions = $bubble;
+
+    return $this;
+  }
+
 	/**
 	 * Processes the request, executing the controller action that handles this
 	 * request, determined by the [Route].
@@ -974,10 +996,16 @@ class Kohana_Request implements HTTP_Request {
 
 		if ( ! $this->_route instanceof Route)
 		{
-			return HTTP_Exception::factory(404, 'Unable to find a route to match the URI: :uri', array(
+      $exception = HTTP_Exception::factory(404, 'Unable to find a route to match the URI: :uri', array(
 				':uri' => $this->_uri,
-			))->request($this)
-				->get_response();
+			))->request($this);
+
+      // If the request should bubble the exceptions, we do it now!
+      if ($this->bubble_exceptions() === TRUE) {
+        throw $exception;
+      }
+
+		  return $exception->get_response();
 		}
 
 		if ( ! $this->_client instanceof Request_Client)
